@@ -1,0 +1,42 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.13
+      docker: 27.5
+    # commands:
+    #   - echo Installing additional packages...
+    #   - apt-get update
+    #   - apt-get install -y build-essential
+    
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 440744244175.dkr.ecr.ap-south-1.amazonaws.com
+      
+  build:
+    commands:
+      - echo Build started on `date`
+      
+      # Build Django application image
+      - echo Building Django Docker image...
+      - docker build -t django:latest .
+      - docker tag django:latest 440744244175.dkr.ecr.ap-south-1.amazonaws.com/mujtaba/django:latest
+      
+      # Build Nginx image
+      - echo Building Nginx Docker image...
+      - docker build -t notes-app/nginx:latest ./nginx
+      - docker tag notes-app/nginx:latest 440744244175.dkr.ecr.ap-south-1.amazonaws.com/mujtaba/nginx:latest
+      
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      
+      # Push Django image
+      - echo Pushing Django Docker image...
+      - docker push 440744244175.dkr.ecr.ap-south-1.amazonaws.com/mujtaba/django:latest
+      
+      # Push Nginx image
+      - echo Pushing Nginx Docker image...
+      - docker push 440744244175.dkr.ecr.ap-south-1.amazonaws.com/mujtaba/nginx:latest
